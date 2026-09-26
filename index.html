@@ -200,10 +200,14 @@
       <label>Phone or email<input id="ct" placeholder="How should we reach you?"></label>
     </div>
     <label>Anything we should know<textarea id="msg" rows="4" placeholder="First high-altitude trip, vegetarian, travelling with parents..."></textarea></label>
-    <button class="btn" type="submit">Prepare my enquiry</button>
+    <input type="text" id="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
+    <div class="sendrow">
+      <button class="btn wa" type="button" id="sendWa">Send on WhatsApp</button>
+      <button class="btn ghost" type="button" id="sendMail">Send by email</button>
+      <button class="btn ghost" type="button" id="copy">Copy enquiry</button>
+    </div>
     <div class="out" id="out" aria-live="polite"></div>
-    <button class="btn ghost" type="button" id="copy" hidden>Copy enquiry</button>
-    <p class="note">This page prepares your message. Copy it and send it to Gypsy Panda Adventures on WhatsApp or email.</p>
+    <p class="note">Your name and phone or email are used only to reply to this enquiry.</p>
   </form>
 </div></section>
 </main>
