@@ -1,4 +1,11 @@
 
+/* ---------- SETTINGS: edit these three lines ---------- */
+var CONFIG={
+  whatsapp:"918319724869",  // your WhatsApp number with country code, digits only, e.g. "919876543210"
+  email:"",     // where email enquiries go, e.g. "hello@yourdomain.com"
+  sheetUrl:""   // Google Apps Script web app URL that logs enquiries to a sheet (see integrations/SETUP.md)
+};
+
 /* ---------- illustrated scenes (photo slots can replace these later) ---------- */
 function pines(a,c){return a.map(function(p){var x=p[0],b=p[1],h=p[2],w=h*.38;return '<path d="M'+(x-w)+' '+b+' '+x+' '+(b-h)+' '+(x+w)+' '+b+'Z" fill="'+c+'"/>'}).join("")}
 var SC={
@@ -334,18 +341,30 @@ function route(){
 function pick(n){document.getElementById("pkg").value=n;go("enquire")}
 document.querySelector("[data-pick]").addEventListener("click",function(){document.getElementById("pkg").value=this.getAttribute("data-pick")});
 ["days","cmon","cpax","cpace","cbud"].forEach(function(i){document.getElementById(i).addEventListener("input",renderOutline)});
-var text="";
-document.getElementById("form").addEventListener("submit",function(e){
-  e.preventDefault();
-  var g=function(i){return document.getElementById(i).value.trim()};
-  text="Hello Gypsy Panda Adventures,\n\nI'd like to plan: "+g("pkg")+"\nTravelling in: "+g("mon")+"\nGroup size: "+g("pax")+"\nName: "+(g("nm")||"-")+"\nContact: "+(g("ct")||"-")+"\nNotes: "+(g("msg")||"-");
-  var o=document.getElementById("out");o.textContent=text;o.classList.add("show");
-  document.getElementById("copy").hidden=false;
-});
+function enquiryData(){var g=function(i){return document.getElementById(i).value.trim()};return {name:g("nm"),contact:g("ct"),trip:g("pkg"),month:g("mon"),pax:g("pax"),notes:g("msg")}}
+function enquiryText(d){return "Hello Gypsy Panda Adventures,\n\nI'd like to plan: "+d.trip+"\nTravelling in: "+d.month+"\nGroup size: "+d.pax+"\nName: "+(d.name||"-")+"\nContact: "+(d.contact||"-")+"\nNotes: "+(d.notes||"-")}
+function say(msg,ok){var o=document.getElementById("out");o.textContent=msg;o.classList.add("show");o.style.borderColor=ok?"":"#c0392b"}
+function logToSheet(d){
+  if(!CONFIG.sheetUrl)return;
+  try{fetch(CONFIG.sheetUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({source:location.href.split("#")[0]},d))}).catch(function(){})}catch(e){}
+}
+function openLink(url,newTab){var a=document.createElement("a");a.href=url;if(newTab){a.target="_blank";a.rel="noopener"}document.body.appendChild(a);a.click();a.remove()}
+function send(via){
+  if(document.getElementById("hp").value)return;
+  var d=enquiryData();
+  if(!d.name||!d.contact){say("Please add your name and a phone number or email so we can reply.",false);return}
+  var text=enquiryText(d);
+  logToSheet(d);
+  if(via==="wa"){openLink("https://wa.me/"+String(CONFIG.whatsapp).replace(/\D/g,"")+"?text="+encodeURIComponent(text),true);say("Opening WhatsApp. Press send there to finish.\n\n"+text,true)}
+  else{openLink("mailto:"+CONFIG.email+"?subject="+encodeURIComponent("Trip enquiry: "+d.trip)+"&body="+encodeURIComponent(text),false);say("Opening your email app. Press send there to finish.\n\n"+text,true)}
+}
+document.getElementById("form").addEventListener("submit",function(e){e.preventDefault();send("wa")});
+document.getElementById("sendWa").addEventListener("click",function(){send("wa")});
+document.getElementById("sendMail").addEventListener("click",function(){send("mail")});
 document.getElementById("copy").addEventListener("click",function(){
-  var b=this;
+  var b=this,text=enquiryText(enquiryData());
   function done(){b.textContent="Copied";setTimeout(function(){b.textContent="Copy enquiry"},1800)}
-  function sel(){var r=document.createRange();r.selectNodeContents(document.getElementById("out"));var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent="Selected, press copy"}
+  function sel(){say(text,true);var r=document.createRange();r.selectNodeContents(document.getElementById("out"));var x=getSelection();x.removeAllRanges();x.addRange(r);b.textContent="Selected, press copy"}
   try{navigator.clipboard.writeText(text).then(done,sel)}catch(x){sel()}
 });
 fillForm();renderHome();renderRegions();renderStyles();renderPlaces();renderOutline();renderSeason();window.addEventListener("hashchange",route);route();
